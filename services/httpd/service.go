@@ -9,7 +9,7 @@ import (
 
 type Service struct {
     Config   *Config
-    listener *net.Listener
+    listener net.Listener
     Handler  *Handler
     logger   *log.Logger
 }
@@ -29,7 +29,7 @@ func (s *Service) Open() error {
         s.logger.Fatalf("Bind to %s failed: %s", s.Config.BindAddress, err.Error())
         return err
     }
-    s.listener = &listener
+    s.listener = listener
     go s.serve()
     if err == nil {
         s.logger.Printf("Service started")
@@ -38,11 +38,15 @@ func (s *Service) Open() error {
 }
 
 func (s *Service) Close() error {
+    err := s.listener.Close()
+    if err != nil {
+        return err
+    }
     return nil
 }
 
 func (s *Service) serve() {
-    err := http.Serve(*s.listener, s.Handler)
+    err := http.Serve(s.listener, s.Handler)
     if err != nil {
         s.logger.Fatalf("Serve failed: %s", err.Error())
     }
