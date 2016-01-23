@@ -9,7 +9,6 @@ import (
     "net"
     "strings"
     "reflect"
-    "github.com/wandoulabs/codis/pkg/utils/errors"
 )
 
 type route struct {
@@ -129,23 +128,19 @@ type ec2IPFromNameRequest struct {
 }
 
 func (h *Handler) serveEC2IPFromName(w http.ResponseWriter, request ec2IPFromNameRequest) {
-    if request.Name == "" {
-        writeError(w, errors.New("name required"))
+    ec2 := aws.EC2Instance{}
+    err := h.AWSService.GetEC2FromName(request.Name, &ec2)
+    if err != nil {
+        writeError(w, err)
     } else {
-        ec2 := aws.EC2Instance{}
-        err := h.AWSService.GetEC2FromName(request.Name, &ec2)
-        if err != nil {
-            writeError(w, err)
-        } else {
-            var value string
-            if request.Private {
-                value = ec2.PrivateIP
-            }
-            if request.Public {
-                value += "|" + ec2.PublicIP
-            }
-            writeString(w, value)
+        var value string
+        if request.Private {
+            value = ec2.PrivateIP
         }
+        if request.Public {
+            value += "|" + ec2.PublicIP
+        }
+        writeString(w, value)
     }
 }
 
