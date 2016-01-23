@@ -46,7 +46,7 @@ func NewHandler() *Handler {
 func (h *Handler) SetRoutes(routes []route) {
     for _, r := range routes {
         var handler http.Handler
-        if hf, ok := r.handlerFunc.(HTTPHandler); ok {
+        if hf, ok := r.handlerFunc.(func(http.ResponseWriter, *http.Request)); ok {
             handler = http.HandlerFunc(hf)
         } else if hf, ok := r.handlerFunc.(func() error); ok {
             handler = http.HandlerFunc(wrapNoContentHandler(hf))
