@@ -24,7 +24,7 @@ func (m *Main) Run() error {
     m.Logger.Println("Starting service")
     err := m.Server.Open()
     if err != nil {
-        m.Logger.Fatalf("Start service failed %s\n", err.Error())
+        m.Logger.Fatalf("Start server failed: %s\n", err.Error())
         return err
     } else {
         m.Logger.Println("Service started")

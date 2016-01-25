@@ -7,7 +7,6 @@ import (
     "github.com/page31/aws-meta-server/services/httpd"
 )
 
-
 type Server struct {
     Config      ServerConfig
     Services    []Service
@@ -64,13 +63,17 @@ func (s *Server) appendAWSService(c aws.Config) {
 }
 
 func (s *Server) appendDNSService(c named.Config) {
-    s.dnsService = named.NewService(c)
-    s.dnsService.AWSService = s.awsService
-    s.Services = append(s.Services, s.dnsService)
+    if c.Enabled {
+        s.dnsService = named.NewService(c)
+        s.dnsService.AWSService = s.awsService
+        s.Services = append(s.Services, s.dnsService)
+    }
 }
 
 func (s *Server) appendHTTPService(c httpd.Config) {
-    s.httpService = httpd.NewService(c)
-    s.httpService.Handler.AWSService = s.awsService
-    s.Services = append(s.Services, s.httpService)
+    if c.Enabled {
+        s.httpService = httpd.NewService(c)
+        s.httpService.Handler.AWSService = s.awsService
+        s.Services = append(s.Services, s.httpService)
+    }
 }

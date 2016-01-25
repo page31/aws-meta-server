@@ -8,6 +8,7 @@ import (
     "github.com/aws/aws-sdk-go/service/ec2"
     "github.com/aws/aws-sdk-go/aws/credentials"
     "github.com/aws/aws-sdk-go/aws/session"
+    "time"
 )
 
 type Service struct {
@@ -24,6 +25,8 @@ type EC2Instance struct {
     PubicDNS   string
     PrivateDNS string
     Name       string
+    UpdateTime time.Time
+    MaxAge     uint32
 }
 
 var (
@@ -33,7 +36,6 @@ var (
 func NewService(c Config) *Service {
     awsConfig := aws.NewConfig().WithCredentials(
         credentials.NewStaticCredentials(c.AccessKeyID, c.SecretAccessKey, "")).WithRegion(c.Region)
-
     s := &Service{
         Config: &c,
         logger: log.New(os.Stderr, "[aws] ", log.LstdFlags),
@@ -60,16 +62,14 @@ func (s *Service) GetAllEC2Names() []string {
     return names
 }
 
-func (s *Service) GetEC2FromName(name string, output *EC2Instance) error {
-    instance := s.findEC2Instance(func(inst *EC2Instance) bool {
-        return inst.Name == name
+func (s *Service) GetEC2FromName(name string) (instances []EC2Instance) {
+    s.eachEC2Instance(func(idx int, inst *EC2Instance) bool {
+        if inst.Name == name {
+            instances = append(instances, *inst)
+        }
+        return true
     })
-    if instance == nil {
-        return notFoundError
-    } else if output != nil {
-        *output = *instance
-    }
-    return nil
+    return instances
 }
 
 func (s *Service) GetEC2NameFromIP(ip string) (error, string) {
@@ -125,6 +125,8 @@ func newEC2(inst *ec2.Instance) *EC2Instance {
     if inst.PrivateIpAddress != nil {
         ec2.PrivateIP = *inst.PrivateIpAddress
     }
+    ec2.UpdateTime = time.Now()
+    ec2.MaxAge = 60
     return ec2
 }
 
@@ -160,4 +162,13 @@ func (s *Service) eachEC2Instance(iterFunc func(index int, instance *EC2Instance
         }
     }
     return loopCount
+}
+
+func (ec2 *EC2Instance) Ttl() uint32 {
+    age := uint32(time.Now().Sub(ec2.UpdateTime).Seconds())
+    if age > ec2.MaxAge {
+        return 0
+    } else {
+        return ec2.MaxAge - age
+    }
 }

@@ -128,19 +128,24 @@ type ec2IPFromNameRequest struct {
 }
 
 func (h *Handler) serveEC2IPFromName(w http.ResponseWriter, request ec2IPFromNameRequest) {
-    ec2 := aws.EC2Instance{}
-    err := h.AWSService.GetEC2FromName(request.Name, &ec2)
-    if err != nil {
-        writeError(w, err)
-    } else {
-        var value string
-        if request.Private {
-            value = ec2.PrivateIP
+    instances := h.AWSService.GetEC2FromName(request.Name)
+    w.WriteHeader(200)
+    if len(instances) > 0 {
+        for _, inst := range instances {
+            var value string
+            if request.Private {
+                value = inst.PrivateIP
+            }
+            if request.Public {
+                value += "|" + inst.PublicIP
+            }
+            if len(value) > 0 {
+                break
+            }
+            if  _, err := w.Write([]byte(value + "\n")); err != nil {
+                break
+            }
         }
-        if request.Public {
-            value += "|" + ec2.PublicIP
-        }
-        writeString(w, value)
     }
 }
 
