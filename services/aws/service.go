@@ -49,7 +49,7 @@ func (s *Service) Open() error {
     err := s.UpdateCache()
     s.updateTicker = time.NewTicker(30 * time.Second)
     go func() {
-        for _ := range s.updateTicker.C {
+        for range s.updateTicker.C {
             s.UpdateCache()
         }
     }()
