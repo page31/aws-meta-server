@@ -15,6 +15,7 @@ type Service struct {
     Config       *Config
     logger       *log.Logger
     awsConfig    *aws.Config
+    updateTicker *time.Ticker
     ec2Instances []*EC2Instance
 }
 
@@ -46,10 +47,18 @@ func NewService(c Config) *Service {
 
 func (s *Service) Open() error {
     err := s.UpdateCache()
+    s.updateTicker = time.NewTicker(30 * time.Second)
+    go func() {
+        for _ := range s.updateTicker.C {
+            s.UpdateCache()
+        }
+    }()
     return err;
 }
 
 func (s *Service) Close() error {
+    s.updateTicker.Stop()
+    s.updateTicker = nil
     return nil;
 }
 
