@@ -27,7 +27,6 @@ type EC2Instance struct {
     PrivateDNS string
     Name       string
     UpdateTime time.Time
-    MaxAge     uint32
 }
 
 var (
@@ -135,7 +134,6 @@ func newEC2(inst *ec2.Instance) *EC2Instance {
         ec2.PrivateIP = *inst.PrivateIpAddress
     }
     ec2.UpdateTime = time.Now()
-    ec2.MaxAge = 60
     return ec2
 }
 
@@ -173,11 +171,6 @@ func (s *Service) eachEC2Instance(iterFunc func(index int, instance *EC2Instance
     return loopCount
 }
 
-func (ec2 *EC2Instance) Ttl() uint32 {
-    age := uint32(time.Now().Sub(ec2.UpdateTime).Seconds())
-    if age > ec2.MaxAge {
-        return 0
-    } else {
-        return ec2.MaxAge - age
-    }
+func (ec2 *EC2Instance) Age() uint32 {
+    return uint32(time.Now().Sub(ec2.UpdateTime).Seconds())
 }

@@ -140,10 +140,7 @@ func (h *Handler) serveEC2IPFromName(w http.ResponseWriter, request ec2IPFromNam
                 value += "|" + inst.PublicIP
             }
             if len(value) > 0 {
-                break
-            }
-            if  _, err := w.Write([]byte(value + "\n")); err != nil {
-                break
+                w.Write([]byte(value + "\n"));
             }
         }
     }

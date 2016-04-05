@@ -7,4 +7,5 @@ type Config struct {
     Domain  string
     Host    string
     Mbox    string
+    Ttl     uint32
 }

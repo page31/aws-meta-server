@@ -126,15 +126,19 @@ func (s *Service) handle(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 func (s *Service) answer(q dns.Question) (answers []dns.RR) {
-    name := q.Name[0:len(q.Name) - len(s.Config.Domain) - 1]
+    name := strings.TrimSuffix(q.Name, s.Config.Domain)
+    if name != "" && strings.HasSuffix(name, "."){
+        name = name[0:len(name) - 1]
+    }
     instances := s.AWSService.GetEC2FromName(name)
     for _, inst := range instances {
         var target string
+        ttl := s.Config.Ttl
         hdr := dns.RR_Header{
             Name: q.Name,
             Class: dns.ClassINET,
             Rrtype: q.Qtype,
-            Ttl: inst.Ttl(),
+            Ttl: ttl,
         }
         if inst.PubicDNS != "" {
             hdr.Rrtype = dns.TypeCNAME
